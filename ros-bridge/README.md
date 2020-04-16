@@ -7,7 +7,7 @@
 ./docker/build-docker.sh --version VERSION --ros-distro ROS_DISTRO
 ```
 |オプション      |パラメータ |説明                   |既定値 |
-|:--------------:|:---------:|-----------------------|:-----:|
+|----------------|:---------:|-----------------------|:-----:|
 |-h, --help      |なし       |ヘルプを表示           |なし   |
 |-v, --version   |VERSION    |CARLAのバージョンを指定|0.9.8  |
 |-r, --ros-distro|ROS_DISTRO |ROSのバージョンを指定  |melodic|
@@ -17,7 +17,7 @@
 ./docker/run-docker.sh --version VERSION --name NAME --ros-distro ROS_DISTRO
 ```
 |オプション      |パラメータ |説明                   |既定値          |
-|:--------------:|:---------:|-----------------------|:--------------:|
+|----------------|:---------:|-----------------------|:--------------:|
 |-h, --help      |なし       |ヘルプを表示           |なし            |
 |-v, --version   |VERSION    |CARLAのバージョンを指定|0.9.8           |
 |-n, --name      |NAME       |コンテナの名前         |carla-ros-bridge|
