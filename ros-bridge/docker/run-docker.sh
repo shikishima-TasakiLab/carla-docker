@@ -71,4 +71,4 @@ echo "ROS DISTRO    = ${ROS_DISTRO}"
 
 echo ${VOLUME}
 
-docker run --rm -it --gpus all -e DISPLAY=$DISPLAY --network carla-net ${VOLUME} ${IMAGE}
+docker run --rm -it --gpus all -e DISPLAY=$DISPLAY --name ${CONTAINER_NAME} --network carla-net ${VOLUME} ${IMAGE}

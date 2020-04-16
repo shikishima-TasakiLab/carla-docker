@@ -63,9 +63,9 @@ VOLUME="-v /tmp/.X11-unix/:/tmp/.X11-unix:rw"
 docker network create carla-net
 
 if [[ $SCREEN == "on" ]]; then
-    docker run --rm -it --gpus all -e DISPLAY=$DISPLAY -p 2000-2002:2000-2002 --name ${CONTAINER_NAME} --network carla-net $VOLUME $IMAGE
+    docker run --rm -it --gpus all -e DISPLAY=$DISPLAY -p 2000-2002:2000-2002 --name ${CONTAINER_NAME} --network carla-net ${VOLUME} ${IMAGE}
 else
-    docker run --rm -it --gpus all -e DISPLAY=$DISPLAY -e SDL_VIDEODRIVER=offscreen -p 2000-2002:2000-2002 --name ${CONTAINER_NAME} --network carla-net $VOLUME $IMAGE
+    docker run --rm -it --gpus all -e DISPLAY=$DISPLAY -e SDL_VIDEODRIVER=offscreen -p 2000-2002:2000-2002 --name ${CONTAINER_NAME} --network carla-net ${VOLUME} ${IMAGE}
 fi
 
 docker network rm carla-net
