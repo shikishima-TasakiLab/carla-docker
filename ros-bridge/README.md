@@ -2,6 +2,8 @@
 
 ## Docker
 
+※先にSIMULATORのDockerイメージをビルドしてください．
+
 ### Docker イメージの作成
 ```bash
 ./docker/build-docker.sh --version VERSION --ros-distro ROS_DISTRO
