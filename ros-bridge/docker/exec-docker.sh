@@ -18,8 +18,6 @@ function usage_exit {
     -n, --name NAME                 コンテナの名前を指定
     -r, --ros-distro ROS_DISTRO     ROSのバージョンを指定
 
-  Example: $PROG_NAME --version $CARLA_VERSION --ros-distro $ROS_DISTRO
-
 _EOS_
     cd ${CURRENT_DIR}
     exit 1

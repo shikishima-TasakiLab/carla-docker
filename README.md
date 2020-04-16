@@ -54,5 +54,11 @@ git clone --recursive https://github.com/shikishima-TasakiLab/carla-docker.git
     ```
     コマンドの詳細：[./ros-bridge/README.md](https://github.com/shikishima-TasakiLab/carla-docker/blob/master/simulator/README.md)
 
+3. ROS-BridgeのDockerコンテナで複数のROSパッケージを使用する際は，次のコマンドを別のターミナルで実行する．
+    ```bash
+    ./ros-bridge/docker/exec-docker.sh
+    ```
+    コマンドの詳細：[./ros-bridge/README.md](https://github.com/shikishima-TasakiLab/carla-docker/blob/master/simulator/README.md)
+
 ### CARLAの使用方法
 [CARLA Documentation](https://carla.readthedocs.io/en/latest/)・[CARLA GitHub](https://github.com/carla-simulator)を参照．
