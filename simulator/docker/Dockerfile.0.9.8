@@ -11,11 +11,11 @@ RUN apt-get update \
     && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 304F9BC29914A77D \
     && add-apt-repository "deb [arch=amd64 trusted=yes] http://dist.carla.org/carla-0.9.8/ all main" \
     && apt-get update \
-    && apt-get install -y xdg-user-dirs carla
+    && apt-get install -y xdg-user-dirs carla-simulator
 
-WORKDIR /opt/carla
+WORKDIR /opt/carla-simulator
 RUN /bin/bash ImportAssets.sh
 
 USER ${HOST_USER}
 WORKDIR /home/carla
-CMD /opt/carla/bin/CarlaUE4.sh
+CMD /opt/carla-simulator/bin/CarlaUE4.sh

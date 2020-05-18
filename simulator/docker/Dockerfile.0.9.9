@@ -1,6 +1,6 @@
 FROM nvidia/opengl:1.0-glvnd-runtime-ubuntu18.04
 
-ARG CARLA_VERSION="0.9.7"
+ARG CARLA_VERSION="0.9.8"
 ARG HOST_USER
 
 RUN useradd -m -u ${HOST_USER} carla
@@ -8,8 +8,8 @@ RUN useradd -m -u ${HOST_USER} carla
 RUN apt-get update \
     && apt-get install -y tzdata \
     && apt-get install -y software-properties-common \
-    && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys DB53A429E64554FC \
-    && add-apt-repository "deb [arch=amd64 trusted=yes] http://dist.carla.org/carla-0.9.7/ all main" \
+    && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 92635A407F7A020C \
+    && add-apt-repository "deb [arch=amd64 trusted=yes] http://dist.carla.org/carla-0.9.9/ all main" \
     && apt-get update \
     && apt-get install -y xdg-user-dirs carla-simulator
 

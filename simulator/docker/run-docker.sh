@@ -14,7 +14,6 @@ function usage_exit {
     -h, --help              このヘルプを表示
     -s, --screen {on|off}   画面の表示のON/OFF切り替え      (既定値：$SCREEN)
     -n, --name NAME         コンテナの名前を設定            (既定値：$CONTAINER_NAME)
-    -v, --version VERSION   ImageのCARLAのバージョンを指定  (既定値：$CARLA_VERSION)
 
   Example: $PROG_NAME --screen off
 
@@ -42,30 +41,65 @@ while (( $# > 0 )); do
         fi
         CONTAINER_NAME=$2
         shift 2
-    elif [[ $1 == "--version" ]] || [[ $1 == "-v" ]]; then
-        docker images | grep carla/simulator | grep $2
-        if [[ $? == "0" ]]; then
-            CARLA_VERSION=$2
-        else
-            echo "Imageが存在しません：carla/simulator:$2"
-            usage_exit
-        fi
-        shift 2
     else
         echo "無効なパラメータ： $1"
         usage_exit
     fi
 done
 
-IMAGE="carla/simulator:${CARLA_VERSION}"
-VOLUME="-v /tmp/.X11-unix/:/tmp/.X11-unix:rw"
+IMAGE_LS=$(docker image ls carla/simulator)
+declare -a images=()
+
+IMAGE_LS_LINES=$(echo "${IMAGE_LS}" | wc -l)
+if [[ ${IMAGE_LS_LINES} -eq 1 ]]; then
+    echo "carla/simulator のイメージが見つかりませんでした．"
+    docker images
+    usage_exit
+else
+    cnt=0
+    while read repo tag id created size ; do
+        if [[ ${cnt} != 0 ]]; then
+            images+=( "${repo}:${tag}" )
+        fi
+        cnt=$((${cnt}+1))
+    done <<END
+${IMAGE_LS}
+END
+    if [[ ${#images[@]} -eq 1 ]]; then
+        DOCKER_IMAGE="${images[0]}"
+        echo "${DOCKER_IMAGE}"
+    else
+        echo -e "番号\tイメージ:タグ"
+        cnt=0
+        for im in ${images[@]}; do
+            echo -e "${cnt}:\t${im}"
+            cnt=$((${cnt}+1))
+        done
+        isnum=3
+        image_num=-1
+        while [[ ${isnum} -ge 2 ]] || [[ ${image_num} -ge ${cnt} ]] || [[ ${image_num} -lt 0 ]]; do
+            read -p "使用するイメージの番号を入力してください: " image_num
+            expr ${image_num} + 1 > /dev/null 2>&1
+            isnum=$?
+        done
+        DOCKER_IMAGE="${images[${image_num}]}"
+        echo "${DOCKER_IMAGE}"
+    fi
+fi
 
 docker network create carla-net
 
 if [[ $SCREEN == "on" ]]; then
-    docker run --rm -it --gpus all -e DISPLAY=$DISPLAY -p 2000-2002:2000-2002 --name ${CONTAINER_NAME} --network carla-net ${VOLUME} ${IMAGE}
+    XSOCK="/tmp/.X11-unix"
+    XAUTH="/tmp/.docker.xauth"
+    DOCKER_VOLUME="${DOCKER_VOLUME} -v ${XSOCK}:${XSOCK}:rw"
+    DOCKER_VOLUME="${DOCKER_VOLUME} -v ${XAUTH}:${XAUTH}:rw"
+    touch ${XAUTH}
+    xauth nlist $DISPLAY | sed -e 's/^..../ffff/' | xauth -f ${XAUTH} nmerge -
+    
+    docker run --rm -it --gpus all -e DISPLAY=$DISPLAY -p 2000-2002:2000-2002 --name ${CONTAINER_NAME} --network carla-net ${DOCKER_VOLUME} ${DOCKER_IMAGE}
 else
-    docker run --rm -it --gpus all -e DISPLAY=$DISPLAY -e SDL_VIDEODRIVER=offscreen -p 2000-2002:2000-2002 --name ${CONTAINER_NAME} --network carla-net ${VOLUME} ${IMAGE}
+    docker run --rm -it --gpus all -e DISPLAY=$DISPLAY -e SDL_VIDEODRIVER=offscreen -p 2000-2002:2000-2002 --name ${CONTAINER_NAME} --network carla-net ${DOCKER_VOLUME} ${DOCKER_IMAGE}
 fi
 
 docker network rm carla-net

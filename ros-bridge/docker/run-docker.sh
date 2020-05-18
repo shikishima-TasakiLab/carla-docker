@@ -1,7 +1,5 @@
 #/bin/bash
-CARLA_VERSION="0.9.8"
 CONTAINER_NAME="carla-ros-bridge"
-ROS_DISTRO="melodic"
 
 PROG_NAME=$(basename $0)
 
@@ -12,9 +10,7 @@ function usage_exit {
 
   OPTIONS:
     -h, --help                      このヘルプを表示
-    -v, --version VERSION           ImageのCARLAのバージョンを指定  (既定値：$CARLA_VERSION)
     -n, --name NAME                 コンテナの名前を設定            (既定値：$CONTAINER_NAME)
-    -r, --ros-distro ROS_DISTRO     ROSのバージョンを指定           (既定値：$ROS_DISTRO)
 
   Example: $PROG_NAME --version $CARLA_VERSION --ros-distro $ROS_DISTRO
 
@@ -26,22 +22,6 @@ _EOS_
 while (( $# > 0 )); do
     if [[ $1 == "--help" ]] || [[ $1 == "-h" ]]; then
         usage_exit
-    elif [[ $1 == "--version" ]] || [[ $1 == "-v" ]]; then
-        if [[ $2 == -* ]]; then
-            echo "無効なパラメータ"
-            usage_exit
-        else
-            CARLA_VERSION=$2
-        fi
-        shift 2
-    elif [[ $1 == "--ros-distro" ]] || [[ $1 == "-r" ]]; then
-        if [[ $2 == -* ]]; then
-            echo "無効なパラメータ： $1 $2"
-            usage_exit
-        else
-            ROS_DISTRO=$2
-        fi
-        shift 2
     elif [[ $1 == "--name" ]] || [[ $1 == "-n" ]]; then
         if [[ $2 == -* ]] || [[ $2 == *- ]]; then
             echo "無効なパラメータ： $1 $2"
@@ -55,10 +35,54 @@ while (( $# > 0 )); do
     fi
 done
 
+IMAGE_LS=$(docker image ls carla/ros-bridge)
+declare -a images=()
+
+IMAGE_LS_LINES=$(echo "${IMAGE_LS}" | wc -l)
+if [[ ${IMAGE_LS_LINES} -eq 1 ]]; then
+    echo "carla/ros-bridge のイメージが見つかりませんでした．"
+    docker images
+    usage_exit
+else
+    cnt=0
+    while read repo tag id created size ; do
+        if [[ ${cnt} != 0 ]]; then
+            images+=( "${repo}:${tag}" )
+        fi
+        cnt=$((${cnt}+1))
+    done <<END
+${IMAGE_LS}
+END
+    if [[ ${#images[@]} -eq 1 ]]; then
+        DOCKER_IMAGE="${images[0]}"
+        echo "${DOCKER_IMAGE}"
+    else
+        echo -e "番号\tイメージ:タグ"
+        cnt=0
+        for im in ${images[@]}; do
+            echo -e "${cnt}:\t${im}"
+            cnt=$((${cnt}+1))
+        done
+        isnum=3
+        image_num=-1
+        while [[ ${isnum} -ge 2 ]] || [[ ${image_num} -ge ${cnt} ]] || [[ ${image_num} -lt 0 ]]; do
+            read -p "使用するイメージの番号を入力してください: " image_num
+            expr ${image_num} + 1 > /dev/null 2>&1
+            isnum=$?
+        done
+        DOCKER_IMAGE="${images[${image_num}]}"
+        echo "${DOCKER_IMAGE}"
+    fi
+fi
+
 HOST_WS=$(dirname $(dirname $(readlink -f $0)))/carla_ws
-IMAGE="carla/ros-bridge:${CARLA_VERSION}-${ROS_DISTRO}"
-VOLUME="-v /tmp/.X11-unix:/tmp/.X11-unix:rw"
-VOLUME="${VOLUME} -v ${HOST_WS}:/home/carla/catkin_ws:rw"
+
+XSOCK="/tmp/.X11-unix"
+XAUTH="/tmp/.docker.xauth"
+
+DOCKER_VOLUME="${DOCKER_VOLUME} -v ${XSOCK}:${XSOCK}:rw"
+DOCKER_VOLUME="${DOCKER_VOLUME} -v ${XAUTH}:${XAUTH}:rw"
+DOCKER_VOLUME="${DOCKER_VOLUME} -v ${HOST_WS}:/home/carla/catkin_ws:rw"
 
 docker images | grep carla/ros-bridge | grep ${CARLA_VERSION}-${ROS_DISTRO}
 if [[ $? -ne 0 ]]; then
@@ -71,4 +95,4 @@ echo "ROS DISTRO    = ${ROS_DISTRO}"
 
 echo ${VOLUME}
 
-docker run --rm -it --gpus all -e DISPLAY=$DISPLAY --name ${CONTAINER_NAME} --network carla-net ${VOLUME} ${IMAGE}
+docker run --rm -it --gpus all -e DISPLAY=$DISPLAY --name ${CONTAINER_NAME} --network carla-net ${DOCKER_VOLUME} ${DOCKER_IMAGE}

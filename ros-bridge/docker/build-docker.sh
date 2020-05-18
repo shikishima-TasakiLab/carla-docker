@@ -1,7 +1,7 @@
 #/bin/bash
 
 ROS_DISTRO="melodic"
-CARLA_VERSION="0.9.8"
+CARLA_VERSION="0.9.9"
 
 HOST_USER=$(id -u)
 CURRENT_DIR=$(pwd)
