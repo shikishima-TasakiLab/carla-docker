@@ -2,6 +2,7 @@
 SCREEN="on"
 CONTAINER_NAME="carla-sim"
 CARLA_VERSION="0.9.8"
+CARLA_NETWORK="carla-net"
 
 PROG_NAME=$(basename $0)
 
@@ -14,6 +15,7 @@ function usage_exit {
     -h, --help              このヘルプを表示
     -s, --screen {on|off}   画面の表示のON/OFF切り替え      (既定値：$SCREEN)
     -n, --name NAME         コンテナの名前を設定            (既定値：$CONTAINER_NAME)
+    --net, --network        ネットワークの設定              (既定値：carla-net)
 
   Example: $PROG_NAME --screen off
 
@@ -40,6 +42,13 @@ while (( $# > 0 )); do
             usage_exit
         fi
         CONTAINER_NAME=$2
+        shift 2
+    elif [[ $1 == "--net" ]] || [[ $1 == "--network" ]]; then
+        if [[ $2 == -* ]] || [[ $2 == *- ]]; then
+            echo "無効なパラメータ： $1 $2"
+            usage_exit
+        fi
+        CARLA_NETWORK=$2
         shift 2
     else
         echo "無効なパラメータ： $1"
@@ -87,7 +96,9 @@ END
     fi
 fi
 
-docker network create carla-net
+if [[ ${CARLA_NETWORK} != "host" ]]; then
+    docker network create ${CARLA_NETWORK}
+fi
 
 if [[ $SCREEN == "on" ]]; then
     XSOCK="/tmp/.X11-unix"
@@ -97,9 +108,11 @@ if [[ $SCREEN == "on" ]]; then
     touch ${XAUTH}
     xauth nlist $DISPLAY | sed -e 's/^..../ffff/' | xauth -f ${XAUTH} nmerge -
     
-    docker run --rm -it --gpus all -e DISPLAY=$DISPLAY -p 2000-2002:2000-2002 --name ${CONTAINER_NAME} --network carla-net ${DOCKER_VOLUME} ${DOCKER_IMAGE}
+    docker run --rm -it --gpus all -e DISPLAY=$DISPLAY -p 2000-2002:2000-2002 --name ${CONTAINER_NAME} --network ${CARLA_NETWORK} ${DOCKER_VOLUME} ${DOCKER_IMAGE}
 else
-    docker run --rm -it --gpus all -e DISPLAY=$DISPLAY -e SDL_VIDEODRIVER=offscreen -p 2000-2002:2000-2002 --name ${CONTAINER_NAME} --network carla-net ${DOCKER_VOLUME} ${DOCKER_IMAGE}
+    docker run --rm -it --gpus all -e DISPLAY=$DISPLAY -e SDL_VIDEODRIVER=offscreen -p 2000-2002:2000-2002 --name ${CONTAINER_NAME} --network ${CARLA_NETWORK} ${DOCKER_VOLUME} ${DOCKER_IMAGE}
 fi
 
-docker network rm carla-net
+if [[ ${CARLA_NETWORK} != "host" ]]; then
+    docker network rm ${CARLA_NETWORK}
+fi
