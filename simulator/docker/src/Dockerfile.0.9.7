@@ -1,0 +1,43 @@
+FROM nvidia/opengl:1.0-glvnd-runtime-ubuntu18.04
+
+LABEL maintainer="Shikishima-TasakiLab"
+
+ARG CARLA_VERSION="0.9.7"
+ARG HOST_USER="1000"
+ARG USER_NAME="carla"
+
+SHELL [ "/bin/bash", "-c" ]
+
+RUN apt-get update && \
+    apt-get install -y \
+        sudo \
+        bash-completion
+
+RUN useradd -m $USER_NAME && \
+    echo "$USER_NAME:$USER_NAME" | chpasswd && \
+    usermod --shell /bin/bash $USER_NAME && \
+    usermod -aG sudo $USER_NAME && \
+    echo "$USER_NAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/$USER_NAME && \
+    chmod 0440 /etc/sudoers.d/$USER_NAME && \
+    usermod  --uid $HOST_USER $USER_NAME && \
+    groupmod --gid $HOST_USER $USER_NAME && \
+    gpasswd -a $USER_NAME video
+
+RUN apt-get update && \
+    apt-get install -y tzdata && \
+    apt-get install -y software-properties-common && \
+    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys DB53A429E64554FC && \
+    add-apt-repository "deb [arch=amd64 trusted=yes] http://dist.carla.org/carla-0.9.7/ all main" && \
+    apt-get update && \
+    apt-get install -y xdg-user-dirs carla-simulator && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /opt/carla-simulator
+RUN /bin/bash ImportAssets.sh
+
+COPY ./entrypoint.sh /tmp
+
+USER ${HOST_USER}
+WORKDIR /home/carla
+ENTRYPOINT [ "/tmp/entrypoint.sh" ]

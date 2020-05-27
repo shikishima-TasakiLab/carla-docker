@@ -1,11 +1,8 @@
 CARLA_VERSION="0.9.9"
 
-HOST_USER=$(id -u)
 CURRENT_DIR=$(pwd)
 BUILD_DIR=$(dirname $(readlink -f $0))
 PROG_NAME=$(basename $0)
-
-cd ${BUILD_DIR}
 
 function usage_exit {
   cat <<_EOS_ 1>&2
@@ -31,7 +28,7 @@ while (( $# > 0 )); do
             echo "無効なパラメータ： $1 $2"
             usage_exit
         fi
-        VERSION=$(ls -1 Dockerfile.* | grep $2)
+        VERSION=$(ls -1 ${BUILD_DIR}/src/Dockerfile.* | xargs -n1 basename | grep $2)
         VERSION=${VERSION:11}
         if [[ $VERSION == $2 ]]; then
             CARLA_VERSION=$2
@@ -49,9 +46,7 @@ done
 echo "CARLA VERSION = ${CARLA_VERSION}"
 
 docker build \
-    -f Dockerfile.${CARLA_VERSION} \
-    --build-arg HOST_USER=${HOST_USER} \
+    -f ${BUILD_DIR}/src/Dockerfile.${CARLA_VERSION} \
     --force-rm=true \
-    -t carla/simulator:${CARLA_VERSION} .
-
-cd ${CURRENT_DIR}
+    -t carla/simulator:${CARLA_VERSION} \
+    ${BUILD_DIR}/src

@@ -1,10 +1,11 @@
 #!/bin/bash
 SCREEN="on"
 CONTAINER_NAME="carla-sim"
-CARLA_VERSION="0.9.8"
+CARLA_VERSION="0.9.9"
 CARLA_NETWORK="carla-net"
 
 PROG_NAME=$(basename $0)
+USER_ID=$(id -u)
 
 function usage_exit {
   cat <<_EOS_ 1>&2
@@ -96,6 +97,8 @@ END
     fi
 fi
 
+DOCKER_ENV="-e USER_ID=${USER_ID}"
+
 if [[ ${CARLA_NETWORK} != "host" ]]; then
     docker network create ${CARLA_NETWORK}
 fi
@@ -105,12 +108,36 @@ if [[ $SCREEN == "on" ]]; then
     XAUTH="/tmp/.docker.xauth"
     DOCKER_VOLUME="${DOCKER_VOLUME} -v ${XSOCK}:${XSOCK}:rw"
     DOCKER_VOLUME="${DOCKER_VOLUME} -v ${XAUTH}:${XAUTH}:rw"
+    DOCKER_ENV="${DOCKER_ENV} -e XAUTHORITY=${XAUTH}"
+    DOCKER_ENV="${DOCKER_ENV} -e DISPLAY=$DISPLAY"
     touch ${XAUTH}
     xauth nlist $DISPLAY | sed -e 's/^..../ffff/' | xauth -f ${XAUTH} nmerge -
     
-    docker run --rm -it --gpus all -e DISPLAY=$DISPLAY -p 2000-2002:2000-2002 --name ${CONTAINER_NAME} --network ${CARLA_NETWORK} ${DOCKER_VOLUME} ${DOCKER_IMAGE}
+    docker run \
+        --rm \
+        -it \
+        --gpus all \
+        -p 2000-2002:2000-2002 \
+        --name ${CONTAINER_NAME} \
+        --network ${CARLA_NETWORK} \
+        ${DOCKER_ENV} \
+        ${DOCKER_VOLUME} \
+        ${DOCKER_IMAGE} \
+        /opt/carla-simulator/bin/CarlaUE4.sh
 else
-    docker run --rm -it --gpus all -e DISPLAY=$DISPLAY -e SDL_VIDEODRIVER=offscreen -p 2000-2002:2000-2002 --name ${CONTAINER_NAME} --network ${CARLA_NETWORK} ${DOCKER_VOLUME} ${DOCKER_IMAGE}
+    DOCKER_ENV="${DOCKER_ENV} -e SDL_VIDEODRIVER=offscreen"
+
+    docker run \
+        --rm \
+        -it \
+        --gpus all \
+        -p 2000-2002:2000-2002 \
+        --name ${CONTAINER_NAME} \
+        --network ${CARLA_NETWORK} \
+        ${DOCKER_ENV} \
+        ${DOCKER_VOLUME} \
+        ${DOCKER_IMAGE} \
+        /opt/carla-simulator/bin/CarlaUE4.sh
 fi
 
 if [[ ${CARLA_NETWORK} != "host" ]]; then

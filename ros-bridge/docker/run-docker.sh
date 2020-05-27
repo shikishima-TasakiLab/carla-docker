@@ -2,6 +2,7 @@
 CONTAINER_NAME="carla-ros-bridge"
 
 PROG_NAME=$(basename $0)
+USER_ID=$(id -u)
 
 function usage_exit {
   cat <<_EOS_ 1>&2
@@ -80,6 +81,10 @@ HOST_WS=$(dirname $(dirname $(readlink -f $0)))/carla_ws
 XSOCK="/tmp/.X11-unix"
 XAUTH="/tmp/.docker.xauth"
 
+DOCKER_ENV="-e USER_ID=${USER_ID}"
+DOCKER_ENV="${DOCKER_ENV} -e XAUTHORITY=${XAUTH}"
+DOCKER_ENV="${DOCKER_ENV} -e DISPLAY=$DISPLAY"
+
 DOCKER_VOLUME="${DOCKER_VOLUME} -v ${XSOCK}:${XSOCK}:rw"
 DOCKER_VOLUME="${DOCKER_VOLUME} -v ${XAUTH}:${XAUTH}:rw"
 DOCKER_VOLUME="${DOCKER_VOLUME} -v ${HOST_WS}:/home/carla/catkin_ws:rw"
@@ -90,9 +95,16 @@ if [[ $? -ne 0 ]]; then
     usage_exit
 fi
 
-echo "CARLA VERSION = ${CARLA_VERSION}"
-echo "ROS DISTRO    = ${ROS_DISTRO}"
+touch ${XAUTH}
+xauth nlist $DISPLAY | sed -e 's/^..../ffff/' | xauth -f ${XAUTH} nmerge -
 
-echo ${VOLUME}
-
-docker run --rm -it --gpus all -e DISPLAY=$DISPLAY --name ${CONTAINER_NAME} --network carla-net ${DOCKER_VOLUME} ${DOCKER_IMAGE}
+docker run \
+    --rm \
+    -it \
+    --gpus all \
+    --name ${CONTAINER_NAME} \
+    --network carla-net \
+    ${DOCKER_ENV} \
+    ${DOCKER_VOLUME} \
+    ${DOCKER_IMAGE} \
+    /bin/bash -c 'source /opt/ros/${ROSDISTRO}/setup.bash && cd catkin_ws && catkin_make && echo "source /home/carla/catkin_ws/devel/setup.bash" >> /home/carla/.bashrc && /bin/bash'
