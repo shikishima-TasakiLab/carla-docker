@@ -3,7 +3,8 @@ FROM nvidia/opengl:1.0-glvnd-runtime-ubuntu18.04
 LABEL maintainer="Shikishima-TasakiLab"
 
 ARG CARLA_VERSION="0.9.8"
-ARG HOST_USER="1000"
+ARG USER_ID="1000"
+ARG GROUP_ID="15214"
 ARG USER_NAME="carla"
 
 SHELL [ "/bin/bash", "-c" ]
@@ -13,14 +14,14 @@ RUN apt-get update && \
         sudo \
         bash-completion
 
-RUN useradd -m $USER_NAME && \
+RUN groupadd --gid $GROUP_ID $USER_NAME && \
+    useradd --gid $GROUP_ID -m $USER_NAME && \
     echo "$USER_NAME:$USER_NAME" | chpasswd && \
     usermod --shell /bin/bash $USER_NAME && \
     usermod -aG sudo $USER_NAME && \
+    usermod  --uid $USER_ID $USER_NAME && \
     echo "$USER_NAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/$USER_NAME && \
     chmod 0440 /etc/sudoers.d/$USER_NAME && \
-    usermod  --uid $HOST_USER $USER_NAME && \
-    groupmod --gid $HOST_USER $USER_NAME && \
     gpasswd -a $USER_NAME video
 
 RUN apt-get update && \
@@ -38,6 +39,6 @@ RUN /bin/bash ImportAssets.sh
 
 COPY ./entrypoint.sh /tmp
 
-USER ${HOST_USER}
-WORKDIR /home/carla
+USER root
+WORKDIR /root
 ENTRYPOINT [ "/tmp/entrypoint.sh" ]

@@ -1,6 +1,7 @@
 ARG ROS_DISTRO="melodic"
 ARG CARLA_VERSION="0.9.8"
-ARG HOST_USER="1000"
+ARG USER_ID="1000"
+ARG GROUP_ID="15214"
 ARG USER_NAME="carla"
 
 FROM carla/simulator:${CARLA_VERSION} as carla_sim
@@ -8,7 +9,8 @@ FROM carla/simulator:${CARLA_VERSION} as carla_sim
 FROM nvidia/opengl:1.0-glvnd-runtime-ubuntu18.04
 ARG ROS_DISTRO
 ARG CARLA_VERSION
-ARG HOST_USER
+ARG USER_ID
+ARG GROUP_ID
 ARG USER_NAME
 
 RUN apt-get update && \
@@ -16,14 +18,14 @@ RUN apt-get update && \
         sudo \
         bash-completion
 
-RUN useradd -m $USER_NAME && \
+RUN groupadd --gid $GROUP_ID $USER_NAME && \
+    useradd --gid $GROUP_ID -m $USER_NAME && \
     echo "$USER_NAME:$USER_NAME" | chpasswd && \
     usermod --shell /bin/bash $USER_NAME && \
     usermod -aG sudo $USER_NAME && \
+    usermod  --uid $USER_ID $USER_NAME && \
     echo "$USER_NAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/$USER_NAME && \
     chmod 0440 /etc/sudoers.d/$USER_NAME && \
-    usermod  --uid $HOST_USER $USER_NAME && \
-    groupmod --gid $HOST_USER $USER_NAME && \
     gpasswd -a $USER_NAME video
 
 RUN apt-get update && \
@@ -72,5 +74,6 @@ RUN /bin/bash -c 'source /opt/ros/${ROSDISTRO}/setup.bash && rosdep update && ec
 
 ENV PYTHONPATH $PYTHONPATH:/opt/carla-simulator/PythonAPI/carla/dist/carla-${CARLA_VERSION}-py2.7-linux-x86_64.egg
 
-WORKDIR /home/$USER_NAME/catkin_ws
+USER root
+WORKDIR /root
 ENTRYPOINT [ "/tmp/entrypoint.sh" ]
