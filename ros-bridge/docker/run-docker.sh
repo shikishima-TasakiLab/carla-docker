@@ -13,7 +13,7 @@ function usage_exit {
     -h, --help                      このヘルプを表示
     -n, --name NAME                 コンテナの名前を設定            (既定値：$CONTAINER_NAME)
 
-  Example: $PROG_NAME --version $CARLA_VERSION --ros-distro $ROS_DISTRO
+  Example: $PROG_NAME --name $CONTAINER_NAME
 
 _EOS_
     cd ${CURRENT_DIR}
@@ -88,12 +88,6 @@ DOCKER_ENV="${DOCKER_ENV} -e DISPLAY=$DISPLAY"
 DOCKER_VOLUME="${DOCKER_VOLUME} -v ${XSOCK}:${XSOCK}:rw"
 DOCKER_VOLUME="${DOCKER_VOLUME} -v ${XAUTH}:${XAUTH}:rw"
 DOCKER_VOLUME="${DOCKER_VOLUME} -v ${HOST_WS}:/home/carla/catkin_ws:rw"
-
-docker images | grep carla/ros-bridge | grep ${CARLA_VERSION}-${ROS_DISTRO}
-if [[ $? -ne 0 ]]; then
-    echo "Dockerイメージがありません：${IMAGE}"
-    usage_exit
-fi
 
 touch ${XAUTH}
 xauth nlist $DISPLAY | sed -e 's/^..../ffff/' | xauth -f ${XAUTH} nmerge -
