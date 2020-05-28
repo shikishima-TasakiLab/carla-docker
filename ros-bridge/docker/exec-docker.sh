@@ -95,4 +95,4 @@ fi
 
 CONTAINER_ID=${CONTAINER_ID:0:12}
 
-docker exec -it ${CONTAINER_ID} /bin/bash
+docker exec -it -u carla ${CONTAINER_ID} /bin/bash -c "cd ~ && /bin/bash"
