@@ -100,5 +100,4 @@ docker run \
     --network carla-net \
     ${DOCKER_ENV} \
     ${DOCKER_VOLUME} \
-    ${DOCKER_IMAGE} \
-    /bin/bash -c "source /opt/ros/\${ROSDISTRO}/setup.bash && cd catkin_ws && catkin_make && echo \"source /home/carla/catkin_ws/devel/setup.bash\" >> /home/carla/.bashrc && /bin/bash"
+    ${DOCKER_IMAGE}

@@ -17,7 +17,7 @@ echo "CARLA Simulator"
 echo ""
 
 if [ -z "$1" ]; then
-    su - carla -c "set - \"/bin/bash\" -l"
+    su carla -c "set - \"/bin/bash\" -l"
+else
+    su carla -c "exec \"$@\""
 fi
-
-su - carla -c "exec \"$@\""

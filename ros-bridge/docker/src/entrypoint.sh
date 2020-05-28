@@ -17,8 +17,7 @@ echo "CARLA ROS-Bridge"
 echo ""
 
 if [ -z "$1" ]; then
-    su - carla -c "source /opt/ros/\${ROSDISTRO}/setup.bash && cd catkin_ws && catkin_make && echo \"source /home/carla/catkin_ws/devel/setup.bash\" >> /home/carla/.bashrc"
-    su - carla -c "set - \"/bin/bash\" -l"
+    su carla -c "source /opt/ros/${ROSDISTRO}/setup.bash && cd catkin_ws && catkin_make && echo \"source /home/carla/catkin_ws/devel/setup.bash\" >> /home/carla/.bashrc && /bin/bash"
+else
+    su carla -c "exec \"$@\""
 fi
-
-su - carla -c "exec \"$@\""

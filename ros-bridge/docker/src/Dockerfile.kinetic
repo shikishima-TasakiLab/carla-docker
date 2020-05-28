@@ -72,8 +72,9 @@ ENV ROSDISTRO ${ROS_DISTRO}
 
 RUN /bin/bash -c 'source /opt/ros/${ROSDISTRO}/setup.bash && rosdep update && echo "source /opt/ros/${ROSDISTRO}/setup.bash" >> .bashrc'
 
-ENV PYTHONPATH $PYTHONPATH:/opt/carla-simulator/PythonAPI/carla/dist/carla-${CARLA_VERSION}-py2.7-linux-x86_64.egg
-
 USER root
 WORKDIR /root
+ENV ROSDISTRO ${ROS_DISTRO}
+ENV PYTHONPATH $PYTHONPATH:/opt/carla-simulator/PythonAPI/carla/dist/carla-${CARLA_VERSION}-py2.7-linux-x86_64.egg
+
 ENTRYPOINT [ "/tmp/entrypoint.sh" ]
